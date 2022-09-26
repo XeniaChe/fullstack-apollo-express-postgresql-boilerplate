@@ -6,15 +6,32 @@
 
 const resolvers = {
   Query: {
-    me: async (_, args, { me, models }) => await models.User.findByPk(args.id),
-    getSpecUser: async (_, args, { me, models }) =>
-      await models.User.findByPk(args.id),
+    me: async (_, args, { me, models }) => {
+      if (!me) return null;
+
+      try {
+        return await models.User.findByPk(me.id);
+      } catch (error) {
+        throw new Error('Custom error message');
+      }
+    },
+    getSpecUser: async (_, args, { me, models }) => {
+      try {
+        return await models.User.findByPk(args.id);
+      } catch (error) {
+        throw new Error('Custom error message');
+      }
+    },
     users: async (_, args, { models }) => await models.User.findAll(),
   },
 
   User: {
-    messages: (root, _, { models }) => {
-      return root.messageIds.map((id) => models.Message[id]);
+    messages: async (root, _, { models }) => {
+      try {
+        return await models.Message.findAll({ where: { userId: root.id } });
+      } catch (error) {
+        throw new Error('Custom error message');
+      }
     },
   },
 };

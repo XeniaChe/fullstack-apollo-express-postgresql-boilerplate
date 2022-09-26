@@ -53,11 +53,12 @@ const init = async () => {
   const server = new ApolloServer({
     typeDefs: schema,
     resolvers,
-    context: {
+    context: async () => ({
       // Pass the static data to each resolver
       models,
-      // me: models.users[20000000],
-    },
+      // User authentication with custom method
+      me: await models.User.FindByLogin('rwieruch'),
+    }),
   });
 
   await server.start();

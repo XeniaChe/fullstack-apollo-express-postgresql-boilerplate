@@ -3,40 +3,67 @@
 // operate on models data got from context
 // rather then on direct import
  */
-const { v4: uuidv4 } = require('uuid');
 
 const resolvers = {
   Query: {
-    messages: (_, args, { models }) => Object.values(models.messages),
-    getSpecMsg: (_, args, { models }) => models.messages[args.id],
+    messages: async (_, args, { models }) => {
+      try {
+        return await models.Message.findAll();
+      } catch (error) {
+        throw new Error('Custom error message');
+      }
+    },
+    getSpecMsg: async (_, args, { models }) => {
+      try {
+        return await models.Message.findByPk(args.id);
+      } catch (error) {
+        throw new Error('Custom error message');
+      }
+    },
+    getAllMsgsByUser: async (_, args, { models }) => {
+      try {
+        const msgs = await models.Message.findAll({
+          where: { userId: args.userId },
+        });
+
+        return msgs.length ? [...msgs] : [];
+      } catch (error) {
+        throw new Error('Custom error message');
+      }
+    },
   },
 
   Message: {
-    userCreator: (root, _, { models }) => models.users[root.userId],
+    userCreator: async (root, _, { models }) => {
+      try {
+        const user = await models.User.findOne({ where: { id: root.userId } });
+        return user;
+      } catch (error) {
+        throw new Error('Custom error message');
+      }
+    },
   },
 
   Mutation: {
-    createMessage: (_, args, { me, models }) => {
-      const newMsg = { id: uuidv4(), text: args.text, userId: me.id };
+    createMessage: async (_, args, { me, models }) => {
+      try {
+        const newMsg = { text: args.text, userId: me.id };
 
-      models.messages[newMsg.id] = newMsg;
-      models.users[me.id].messageIds.push(newMsg.id);
-
-      return newMsg;
+        // Sve new Msg to DB
+        return await models.Message.create({ ...newMsg });
+      } catch (error) {
+        throw new Error('Custom error message');
+      }
     },
 
-    deleteMessage: (_, args, { me, models }) => {
-      const { [args.id]: message, ...otherMsgs } = models.messages;
+    deleteMessage: async (_, args, { models }) => {
+      try {
+        await models.Message.destroy({ where: { id: args.id } });
 
-      if (!message) return false;
-
-      models.messages = otherMsgs;
-
-      models.users[me.id].messageIds = models.users[me.id].messageIds.filter(
-        (id) => id !== +args.id
-      );
-
-      return true;
+        return true;
+      } catch (error) {
+        throw new Error('Custom error message');
+      }
     },
   },
 };

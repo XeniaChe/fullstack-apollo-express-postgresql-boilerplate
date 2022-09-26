@@ -4,6 +4,7 @@ const messageSchema = gql`
   extend type Query {
     messages: [Message!]
     getSpecMsg(id: ID!): Message
+    getAllMsgsByUser(userId: Int!): [Message]!
   }
 
   type Message {

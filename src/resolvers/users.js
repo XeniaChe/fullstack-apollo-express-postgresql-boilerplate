@@ -3,6 +3,14 @@
 // operate on models data got from context
 // rather then on direct import
  */
+const jwt = require('jsonwebtoken');
+const { models } = require('../models');
+
+const generateToken = async (user, secret, expiresIn) => {
+  const { username, id, email } = user;
+
+  return await jwt.sign({ username, id, email }, secret, { expiresIn });
+};
 
 const resolvers = {
   Query: {
@@ -32,6 +40,18 @@ const resolvers = {
       } catch (error) {
         throw new Error('Custom error message');
       }
+    },
+  },
+
+  Mutation: {
+    signUp: async (root, args, { models, secret }) => {
+      const newUser = await models.User.create({
+        username: args.username,
+        email: args.email,
+        password: args.password,
+      });
+
+      return { token: await generateToken(newUser, secret, '30m') };
     },
   },
 };

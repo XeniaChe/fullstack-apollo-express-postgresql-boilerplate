@@ -19,6 +19,8 @@ const createUsersWithMessages = async () => {
   await models.User.create(
     {
       username: 'rwieruch',
+      email: 'hello@robin.com',
+      password: 'rwieruch',
       messages: [
         {
           text: 'Published the Road to learn React',
@@ -34,6 +36,8 @@ const createUsersWithMessages = async () => {
   await models.User.create(
     {
       username: 'ddavids',
+      email: 'hello@david.com',
+      password: 'ddavids',
       messages: [
         {
           text: 'Happy to release ...',
@@ -56,6 +60,7 @@ const init = async () => {
     context: async () => ({
       // Pass the static data to each resolver
       models,
+      secret: process.env.SECRET,
       // User authentication with custom method
       me: await models.User.FindByLogin('rwieruch'),
     }),

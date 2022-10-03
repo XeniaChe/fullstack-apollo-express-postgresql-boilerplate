@@ -15,8 +15,16 @@ const userSchema = gql`
   type User {
     id: ID!
     username: String!
+    email: String!
     address: Address
     messages: [Message!]
+  }
+  type Token {
+    token: String!
+  }
+
+  type Mutation {
+    signUp(username: String!, password: String!, email: String!): Token!
   }
 `;
 

@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const { User } = require('../resolvers/users');
 
 const user = (sequelize, DataTypes) => {
   const User = sequelize.define('user', {
@@ -50,6 +51,11 @@ const user = (sequelize, DataTypes) => {
     if (!me) me = await User.findOne({ where: { email: login } });
 
     return me;
+  };
+
+  User.validatePassword = async (password) => {
+    // Compare existing pass and the one from args
+    return await bcrypt.compare(password, this.password);
   };
 
   return User;

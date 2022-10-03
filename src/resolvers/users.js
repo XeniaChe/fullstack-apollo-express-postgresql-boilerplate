@@ -4,7 +4,7 @@
 // rather then on direct import
  */
 const jwt = require('jsonwebtoken');
-const { models } = require('../models');
+const { UserInputError, AuthenticationError } = require('apollo-server');
 
 const generateToken = async (user, secret, expiresIn) => {
   const { username, id, email } = user;
@@ -52,6 +52,19 @@ const resolvers = {
       });
 
       return { token: await generateToken(newUser, secret, '30m') };
+    },
+
+    signIn: async (root, args, { models, secret }) => {
+      const user = await models.User.FindByLogin(args.logIn);
+
+      if (!user)
+        throw new UserInputError('No user found with this login credentials.');
+
+      const isValid = await models.User.validatePassword(args.password);
+
+      if (!isValid) throw new AuthenticationError('Wrong password');
+
+      return { token: await generateToken(user, secret, '30m') };
     },
   },
 };

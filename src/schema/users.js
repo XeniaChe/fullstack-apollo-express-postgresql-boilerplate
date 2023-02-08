@@ -16,6 +16,7 @@ const userSchema = gql`
     id: ID!
     username: String!
     email: String!
+    role: String!
     address: Address
     messages: [Message!]
   }
@@ -26,6 +27,8 @@ const userSchema = gql`
   type Mutation {
     signUp(username: String!, password: String!, email: String!): Token!
     signIn(logIn: String!, password: String!): Token!
+    deleteUser(id: ID): Boolean!
+    testError(data: String!): Boolean!
   }
 `;
 

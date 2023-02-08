@@ -11,6 +11,7 @@ const messageSchema = gql`
     id: ID!
     text: String!
     userCreator: User!
+    createdAt: Date!
   }
 
   extend type Mutation {

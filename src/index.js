@@ -1,7 +1,8 @@
 require('dotenv').config();
 const express = require('express');
-const { ApolloServer } = require('apollo-server-express');
+const { ApolloServer, AuthenticationError } = require('apollo-server-express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 
 const resolvers = require('./resolvers');
 const schema = require('./schema/index');
@@ -15,15 +16,17 @@ const app = express();
 app.use(cors());
 
 // Populate DB with init data
-const createUsersWithMessages = async () => {
+const createUsersWithMessages = async (date) => {
   await models.User.create(
     {
       username: 'rwieruch',
       email: 'hello@robin.com',
       password: 'rwieruch',
+      role: 'ADMIN',
       messages: [
         {
           text: 'Published the Road to learn React',
+          createdAt: date.setSeconds(date.getSeconds() + 1),
         },
       ],
     },
@@ -41,9 +44,11 @@ const createUsersWithMessages = async () => {
       messages: [
         {
           text: 'Happy to release ...',
+          createdAt: date.setSeconds(date.getSeconds() + 1),
         },
         {
           text: 'Published a complete ...',
+          createdAt: date.setSeconds(date.getSeconds() + 1),
         },
       ],
     },
@@ -53,17 +58,37 @@ const createUsersWithMessages = async () => {
   );
 };
 
+// Verify token sent by FE and get the user from it
+const verifyToken = async (req) => {
+  if (req.headers.authorization) {
+    const token = req.headers['authorization'].split(' ')[1];
+
+    if (token) {
+      try {
+        return await jwt.verify(token, process.env.SECRET);
+      } catch (e) {
+        throw new AuthenticationError('Your session expired. Sign in again.');
+      }
+    }
+  }
+};
+
 const init = async () => {
   const server = new ApolloServer({
     typeDefs: schema,
     resolvers,
-    context: async () => ({
-      // Pass the static data to each resolver
-      models,
-      secret: process.env.SECRET,
-      // User authentication with custom method
-      me: await models.User.FindByLogin('rwieruch'),
-    }),
+    context: async ({ req }) => {
+      let me = await verifyToken(req);
+
+      return {
+        // Pass the static data to each resolver
+        models,
+        secret: process.env.SECRET,
+        // User authentication with custom method
+        // me: await models.User.FindByLogin('rwieruch'),
+        me,
+      };
+    },
   });
 
   await server.start();
@@ -87,7 +112,7 @@ const init = async () => {
     })
     .then(async () => {
       if (eraseDatabaseOnSync) {
-        createUsersWithMessages();
+        createUsersWithMessages(new Date());
       }
 
       app.listen({ port: 8000 }, () => {

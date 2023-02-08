@@ -3,6 +3,8 @@ const userSchema = require('./users');
 const messageSchema = require('./messages');
 
 const linkedSchema = gql`
+  scalar Date
+
   type Query {
     _: Boolean
   }
